@@ -1,0 +1,34 @@
+extensions:
+  oauth2client:
+    client_id: agent
+    client_secret: REl1G0PHZs0kzgUHfUljvhGKZvRGUPze
+    # Secret below is wrong
+    # client_secret: REl1G0PHZs0kzgUHfUljvhGKZvRGU
+    token_url: http://keycloak:8080/auth/realms/opentelemetry/protocol/openid-connect/token
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+
+processors:
+
+exporters:
+  otlp:
+    endpoint: https://otelcol-remote:4000
+    # tls:
+    #   insecure: true
+    tls:
+      ca_file: /etc/certs/ca.pem
+    auth:
+      authenticator: oauth2client
+  debug:
+    verbosity: detailed
+
+service:
+  extensions: [oauth2client]
+  pipelines:
+    traces/agent:
+      receivers: [otlp]
+      processors: []
+      exporters: [otlp]

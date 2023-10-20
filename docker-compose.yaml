@@ -1,0 +1,81 @@
+version: "3.9"
+
+volumes:
+  keycloak-data:
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:16.1.1
+    container_name: keycloak
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+    volumes:
+      - keycloak-data:/opt/jboss/keycloak/standalone/data/    
+
+  otelcol-local:
+    image: otel/opentelemetry-collector-contrib:latest
+    dns_search: .
+    container_name: otelcol-local
+    deploy:
+      resources:
+        limits:
+          memory: 125M
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: "debug"
+    command: ["--config=/etc/otelcol-config.yaml"]
+    volumes:
+      - ./src/otelcol-local/otelcol-config.yaml:/etc/otelcol-config.yaml
+      - ./src/otelcol-local/certs/:/etc/certs/
+    ports:
+      - "4317:4317" # OTLP over gRPC receiver
+      - "13133" # health check port
+    depends_on:
+      - otelcol-remote
+      - keycloak
+
+  otelcol-remote:
+    image: otel/opentelemetry-collector-contrib:latest
+    dns_search: .
+    # network_mode: bridge
+    container_name: otelcol-remote
+    deploy:
+      resources:
+        limits:
+          memory: 125M
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: "debug"
+    command: ["--config=/etc/otelcol-config.yaml"]
+    volumes:
+      - ./src/otelcol-remote/otelcol-config.yaml:/etc/otelcol-config.yaml
+      - ./src/otelcol-remote/certs/:/etc/certs/
+    ports:
+      - "4000:4000" # OTLP over gRPC receiver
+      # - "4318:4318"
+    depends_on:
+      - jaeger
+      - keycloak
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.48.0
+    container_name: jaeger
+    command:
+      - "--memory.max-traces"
+      - "10000"
+      - "--query.base-path"
+      - "/jaeger/ui"
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    restart: unless-stopped
+    ports:
+      - "16686:16686"         # Jaeger UI
+      - "4317"                # OTLP gRPC default port
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true

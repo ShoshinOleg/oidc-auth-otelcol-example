@@ -1,0 +1,38 @@
+extensions:
+  oidc:
+    issuer_url: http://keycloak:8080/auth/realms/opentelemetry
+    audience: collector
+    attribute: authorization
+
+receivers:
+  otlp/withauth:
+    protocols:
+      grpc:
+        endpoint: otelcol-remote:4000
+        # cors:
+        #   allowed_origins:
+        #     - "http://*"
+        #     - "https://*"
+        tls:
+        #   insecure: true
+          cert_file: /etc/certs/cert.pem
+          key_file:  /etc/certs/cert-key.pem
+        auth:
+          authenticator: oidc
+
+processors:
+
+exporters:
+  logging:
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+service:
+  extensions: [oidc]
+  pipelines:
+    traces/collector:
+      receivers: [otlp/withauth]
+      processors: []
+      exporters: [logging, otlp]
