@@ -1,9 +1,7 @@
 extensions:
   oauth2client:
     client_id: agent
-    client_secret: REl1G0PHZs0kzgUHfUljvhGKZvRGUPze
-    # Secret below is wrong
-    # client_secret: REl1G0PHZs0kzgUHfUljvhGKZvRGU
+    client_secret: ${env:OTLP_COLLECTOR_AGENT_SECRET}
     token_url: http://keycloak:8080/auth/realms/opentelemetry/protocol/openid-connect/token
 
 receivers:

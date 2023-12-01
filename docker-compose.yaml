@@ -27,6 +27,7 @@ services:
     restart: unless-stopped
     environment:
       LOG_LEVEL: "debug"
+      OTLP_COLLECTOR_AGENT_SECRET: "REl1G0PHZs0kzgUHfUljvhGKZvRGUPze"
     command: ["--config=/etc/otelcol-config.yaml"]
     volumes:
       - ./src/otelcol-local/otelcol-config.yaml:/etc/otelcol-config.yaml

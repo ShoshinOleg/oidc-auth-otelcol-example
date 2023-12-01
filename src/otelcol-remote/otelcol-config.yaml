@@ -23,7 +23,8 @@ receivers:
 processors:
 
 exporters:
-  logging:
+  debug:
+    verbosity: detailed
   otlp:
     endpoint: jaeger:4317
     tls:
@@ -35,4 +36,4 @@ service:
     traces/collector:
       receivers: [otlp/withauth]
       processors: []
-      exporters: [logging, otlp]
+      exporters: [debug, otlp]
